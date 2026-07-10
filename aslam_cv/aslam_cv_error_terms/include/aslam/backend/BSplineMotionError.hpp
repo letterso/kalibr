@@ -45,10 +45,12 @@ class BSplineMotionError : public ErrorTermFs<1> {
   virtual double evaluateErrorImplementation();
 
   /// \brief evaluate the jacobian
-  virtual void evaluateJacobiansImplementation();
+  virtual void evaluateJacobiansImplementation(JacobianContainer & outJacobians)
+      const;
 
   virtual void buildHessianImplementation(SparseBlockMatrix & outHessian,
-                                          Eigen::VectorXd & outRhs);
+                                          Eigen::VectorXd & outRhs,
+                                          bool useMEstimator);
 
  private:
   //   ScalarDesignVariable * _x_k;

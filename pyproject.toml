@@ -1,0 +1,38 @@
+[project]
+name = "kalibr-standalone"
+version = "0.0.0"
+description = "Standalone Python environment for Kalibr/aslam tooling."
+requires-python = ">=3.10,<3.11"
+dependencies = [
+  "numpy<2",
+  "scipy",
+  "matplotlib",
+  "opencv-python-headless",
+  "pyyaml",
+  "pyx",
+  "python-igraph",
+  "rosbags",
+]
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "ruff",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [
+  "aslam_offline_calibration/kalibr/python",
+]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

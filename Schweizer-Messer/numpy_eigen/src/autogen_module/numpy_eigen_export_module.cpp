@@ -253,7 +253,11 @@ BOOST_PYTHON_MODULE(libnumpy_eigen)
 {
 	using namespace boost::python;
 	// Without this import, the converter will segfault
-	import_array();
+	if (_import_array() < 0) {
+		PyErr_Print();
+		PyErr_SetString(PyExc_ImportError, "numpy.core.multiarray failed to import");
+		return;
+	}
 
 	import_1_1_int();
 	import_1_1_float();
@@ -502,4 +506,3 @@ BOOST_PYTHON_MODULE(libnumpy_eigen)
 	import_D_D_long();
 
 }
-

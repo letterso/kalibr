@@ -21,6 +21,7 @@
 #endif
 
 #include <boost/static_assert.hpp>
+#include <boost/predef/other/endian.h>
 
 #include <climits>
 #if CHAR_BIT != 8
@@ -28,7 +29,10 @@
 #endif
 
 #include <boost/archive/basic_archive.hpp>
-#include <boost/detail/endian.hpp>
+
+#if (BOOST_ENDIAN_BIG_BYTE || BOOST_ENDIAN_BIG_WORD) && !defined(BOOST_BIG_ENDIAN)
+#define BOOST_BIG_ENDIAN
+#endif
 
 
 namespace boost {
