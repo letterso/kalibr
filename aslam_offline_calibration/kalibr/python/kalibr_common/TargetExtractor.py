@@ -40,9 +40,20 @@ def extractCornersFromDataset(dataset, detector, multithreading=False, numProces
     iProgress = sm.Progress2(numImages)
     iProgress.sample()
             
-    if multithreading:   
+    detector_copies = []
+    if multithreading:
         if not numProcesses:
             numProcesses = max(1,multiprocessing.cpu_count()-1)
+        try:
+            detector_copies = [copy.copy(detector) for _ in range(numProcesses)]
+        except Exception as e:
+            sm.logWarn(
+                "Detector cannot be copied for multithreaded extraction; "
+                "falling back to one process: {0}".format(e)
+            )
+            multithreading = False
+
+    if multithreading:
         try:      
             manager = multiprocessing.Manager()
             resultq = manager.Queue()
@@ -53,8 +64,7 @@ def extractCornersFromDataset(dataset, detector, multithreading=False, numProces
                 taskq.put( (idx, timestamp, image) )
                 
             plist=list()
-            for pidx in range(0, numProcesses):
-                detector_copy = copy.copy(detector)
+            for detector_copy in detector_copies:
                 p = multiprocessing.Process(target=multicoreExtractionWrapper, args=(detector_copy, taskq, resultq, clearImages, noTransformation, ))
                 p.start()
                 plist.append(p)
@@ -105,6 +115,9 @@ def extractCornersFromDataset(dataset, detector, multithreading=False, numProces
         print("\r  Extracted corners for %d images (of %d images)                              " % (len(targetObservations), numImages))
 
     #close all opencv windows that might be open
-    cv2.destroyAllWindows()
+    try:
+        cv2.destroyAllWindows()
+    except cv2.error:
+        pass
     
     return targetObservations

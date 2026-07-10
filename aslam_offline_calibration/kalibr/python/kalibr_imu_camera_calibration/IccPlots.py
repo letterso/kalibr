@@ -283,7 +283,7 @@ def plotReprojectionScatter(cself, cam_id, fno=1, clearFigure=True, noShow=False
     pl.ylabel('error y ($pix$)')
     SM = pl.cm.ScalarMappable(pl.cm.colors.Normalize(0.0,numImages), pl.cm.jet)
     SM.set_array(np.arange(numImages));
-    cb = pl.colorbar(SM)
+    cb = pl.colorbar(SM, ax=f.gca())
     cb.set_label('image index')
     if not noShow:
         pl.show()
