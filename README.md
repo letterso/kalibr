@@ -16,6 +16,40 @@ To install follow the [install wiki page](https://github.com/ethz-asl/kalibr/wik
 Please find more information on the [wiki pages](https://github.com/ethz-asl/kalibr/wiki) of this repository.
 For questions or comments, please open an issue on Github.
 
+## Standalone Python and Bag Reading
+
+This checkout also provides a ROS-free standalone path for the batch calibration
+tools. Python dependencies are managed with `uv`, and ROS1/ROS2 bag parsing is
+handled by [`rosbags`](https://gitlab.com/ternaris/rosbags), so the standalone
+build does not need a ROS installation or catkin workspace.
+
+```bash
+uv sync
+cmake -S . -B build/standalone \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DPython3_EXECUTABLE="$PWD/.venv/bin/python" \
+  -DCMAKE_CXX_COMPILER=/usr/bin/c++
+cmake --build build/standalone -j$(nproc)
+```
+
+After the build, run tools from `build/standalone/bin`. The standalone v1
+wrappers are:
+
+- `kalibr_calibrate_cameras`
+- `kalibr_calibrate_imu_camera`
+- `kalibr_calibrate_rs_cameras`
+- `kalibr_bagextractor`
+- `kalibr_visualize_calibration`
+- `kalibr_visualize_distortion`
+- `kalibr_create_target_pdf`
+
+Existing `--bag` arguments accept ROS1 `.bag` files and ROS2 bag directories.
+The standalone reader supports standard `sensor_msgs/Image`,
+`sensor_msgs/CompressedImage`, and `sensor_msgs/Imu` messages. Live ROS tools
+and ROS bag writing remain ROS-dependent in v1; `kalibr_camera_focus`,
+`kalibr_camera_validator`, and `kalibr_bagcreater` are intentionally not
+installed by the standalone build.
+
 
 ## News / Events
 
