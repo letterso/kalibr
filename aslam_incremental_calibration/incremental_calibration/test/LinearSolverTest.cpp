@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <iostream>
 #include <iomanip>
+#include <limits>
 
 #include <gtest/gtest.h>
 
@@ -36,6 +37,31 @@
 #include "aslam/calibration/core/LinearSolver.h"
 #include "aslam/calibration/algorithms/linalg.h"
 #include "aslam/calibration/base/Timestamp.h"
+
+TEST(AslamCalibrationTestSuite, testQRTolerance) {
+  cholmod_common cholmod;
+  ASSERT_TRUE(cholmod_l_start(&cholmod));
+  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(2, 4);
+  A(0, 0) = 3.0;
+  A(1, 0) = 4.0;
+  A(0, 2) = 5.0;
+  A(1, 2) = 12.0;
+  for (double scale : {1.0, 1e200, 1e-200, 0.0}) {
+    // Keep tiny nonzero values to check overflow and underflow protection.
+    cholmod_sparse* sparse = aslam::calibration::eigenDenseToCholmodSparseCopy(
+      A * scale, &cholmod, 0.0);
+    ASSERT_NE(sparse, nullptr);
+    const double tolerance = aslam::calibration::qrTol(sparse, &cholmod);
+    const double expected = 20.0 * (A.rows() + A.cols()) *
+      std::numeric_limits<double>::epsilon() * 13.0 * scale;
+    if (scale == 0.0)
+      EXPECT_DOUBLE_EQ(tolerance, 0.0);
+    else
+      EXPECT_NEAR(tolerance / expected, 1.0, 1e-12);
+    cholmod_l_free_sparse(&sparse, &cholmod);
+  }
+  cholmod_l_finish(&cholmod);
+}
 
 void evaluateSVDSPQRSolver(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
     const Eigen::VectorXd& x, double tol = 1e-9) {

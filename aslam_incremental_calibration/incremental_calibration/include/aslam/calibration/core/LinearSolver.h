@@ -30,6 +30,7 @@
 #include <string>
 
 #include <cholmod.h>
+#include <SuiteSparseQR.hpp>
 
 #include <Eigen/Core>
 
@@ -37,8 +38,6 @@
 #include <aslam/backend/LinearSystemSolver.hpp>
 
 #include "aslam/calibration/core/LinearSolverOptions.h"
-
-template <typename Entry> struct SuiteSparseQR_factorization;
 
 namespace sm {
 
