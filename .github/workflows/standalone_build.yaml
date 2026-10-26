@@ -1,0 +1,88 @@
+name: Standalone Ubuntu build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Standalone (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    env:
+      MPLBACKEND: Agg
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            libblas-dev \
+            libboost-filesystem-dev \
+            libboost-python-dev \
+            libboost-regex-dev \
+            libboost-serialization-dev \
+            libboost-system-dev \
+            libboost-thread-dev \
+            libeigen3-dev \
+            liblapack-dev \
+            libopencv-dev \
+            libsuitesparse-dev \
+            libtbb-dev \
+            python3-dev \
+            python3-venv
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.13.5"
+          enable-cache: true
+
+      - name: Install Python dependencies
+        # Match the distribution's Boost.Python ABI with its system interpreter.
+        run: uv sync --locked --python /usr/bin/python3
+
+      - name: Configure standalone build
+        run: |
+          cmake -S . -B build/standalone \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPython3_EXECUTABLE="$GITHUB_WORKSPACE/.venv/bin/python" \
+            -DCMAKE_CXX_COMPILER=/usr/bin/c++
+
+      - name: Build libraries and Python bindings
+        # Limit parallelism to keep template-heavy C++ compilation within runner memory.
+        run: cmake --build build/standalone --parallel 2
+
+      - name: Run regression tests
+        run: uv run --locked pytest
+
+      - name: Check calibration command startup
+        run: |
+          for tool in kalibr_calibrate_cameras kalibr_calibrate_imu_camera kalibr_calibrate_rs_cameras; do
+            help_file="$RUNNER_TEMP/$tool-help.txt"
+            status=0
+            "build/standalone/bin/$tool" --help > "$help_file" 2>&1 || status=$?
+            cat "$help_file"
+            # Existing argument parsers return 2 even for a successful --help.
+            if [[ "$status" -ne 0 && "$status" -ne 2 ]]; then
+              exit "$status"
+            fi
+            grep -q '^usage:' "$help_file"
+          done
