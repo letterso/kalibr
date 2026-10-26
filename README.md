@@ -23,14 +23,33 @@ tools. Python dependencies are managed with `uv`, and ROS1/ROS2 bag parsing is
 handled by [`rosbags`](https://gitlab.com/ternaris/rosbags), so the standalone
 build does not need a ROS installation or catkin workspace.
 
+Install the native development dependencies for Eigen3, OpenCV, TBB,
+SuiteSparse, Boost (including Boost.Python), and the system Python headers first.
+The standalone environment supports Python 3.10–3.12 and uses an installed
+interpreter rather than downloading a fixed Python version. Its Python major
+and minor version must match the installed Boost.Python library: for example,
+`libboost_python312` requires Python 3.12. The upper Python bound comes from
+the current `numpy<2` dependency.
+
+On Linux, use the distribution's Python with its matching Boost.Python package:
+
 ```bash
-uv sync
+uv sync --python /usr/bin/python3
 cmake -S . -B build/standalone \
   -DCMAKE_BUILD_TYPE=Release \
   -DPython3_EXECUTABLE="$PWD/.venv/bin/python" \
   -DCMAKE_CXX_COMPILER=/usr/bin/c++
 cmake --build build/standalone -j$(nproc)
 ```
+
+If the default Python on `PATH` already matches Boost.Python, plain `uv sync`
+also works. With multiple Python installations, pass the matching interpreter
+path to `--python`. For an existing Python 3.10 environment on a system whose
+Boost.Python uses another version, rerun `uv sync --python /usr/bin/python3`;
+uv recreates `.venv` when the requested interpreter differs. Then configure and
+build again in a fresh build directory, or add `--fresh` to the CMake configure
+command (CMake 3.24+). CMake caches Python version and header information even
+when the `.venv/bin/python` path stays the same.
 
 After the build, run tools from `build/standalone/bin`. The standalone v1
 wrappers are:

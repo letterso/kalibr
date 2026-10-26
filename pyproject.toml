@@ -2,7 +2,8 @@
 name = "kalibr-standalone"
 version = "0.0.0"
 description = "Standalone Python environment for Kalibr/aslam tooling."
-requires-python = ">=3.10,<3.11"
+# NumPy 1.x supports Python up to 3.12.
+requires-python = ">=3.10,<3.13"
 dependencies = [
   "numpy<2",
   "scipy",
@@ -22,6 +23,8 @@ dev = [
 
 [tool.uv]
 package = false
+# Native bindings must use a Python version matching the installed Boost.Python.
+python-preference = "only-system"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
